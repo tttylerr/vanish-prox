@@ -7,8 +7,20 @@ import { join } from "node:path";
 import { hostname } from "node:os";
 import fs from 'fs';
 
+const cert = fs.readFileSync('ssl/certificate.crt')
+const ca = fs.readFileSync('ssl/ca_bundle.crt')
+const key = fs.readFileSync('ssl/private.key')
+
 const bare = createBareServer("/bare/");
 const app = express();
+
+
+let options = {
+  cert: cert, 
+  ca: ca, 
+  key: key 
+};
+
 
 app.use(express.static(publicPath));
 
@@ -19,7 +31,7 @@ app.use((req, res) => {
   res.sendFile(join(publicPath, "404.html"));
 });
 
-const server = createServer();
+const server = createServer(options);
 
 server.on("request", (req, res) => {
   if (bare.shouldRoute(req)) {
@@ -39,7 +51,7 @@ server.on("upgrade", (req, socket, head) => {
 
 let port = parseInt(process.env.PORT || "");
 
-if (isNaN(port)) port = 8080;
+if (isNaN(port)) port = 443;
 
 server.on("listening", async () => {
   try {
